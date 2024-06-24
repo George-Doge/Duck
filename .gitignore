@@ -163,3 +163,5 @@ cython_debug/
 
 save.json
 error_log.txt
+main
+main.exe
