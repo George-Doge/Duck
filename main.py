@@ -2,7 +2,7 @@ import pygame
 from sys import exit
 from random import randint, choice
 import json
-# from main_menu import main_menu
+from main_menu import main_menu, Button
 pygame.init()
 
 SCREEN_WIDTH = 1080
@@ -24,6 +24,7 @@ try:
     background_img = pygame.transform.scale(background_img, (SCREEN_WIDTH, SCREEN_HEIGHT))
     ammo_img = pygame.image.load('assets/ammo.png').convert_alpha()
     ammo_pack_img = pygame.image.load('assets/ammo_pack.png').convert_alpha()
+    pause_img = pygame.image.load('assets/buttons/pause_button.png').convert_alpha()
 
 except FileNotFoundError as e:
     print("Couldn't load one or multiple images.")
@@ -84,11 +85,11 @@ def load_game():
         with open("save.json", "r") as file:
             data = json.load(file)
 
+        player.score = data.get("score")
+        player.ammo = data.get("ammo")
     except FileNotFoundError:
         print("Sorry, couldn't find the save.json")
 
-    player.score = data.get("score")
-    player.ammo = data.get("ammo")
     print("Game loaded")
 
 class Duck(pygame.sprite.Sprite):
@@ -248,25 +249,44 @@ ducky = Duck(500, 200, 1, 5)
 duck_group.add(ducky)
 player = Hunter()
 
+menu_instance = main_menu()
+pause_button_instance = Button(pause_img, 40, 26, 0.25)
+
 while run:
     clock.tick(FPS)
     
     draw_background()
 
-    duck_group.update()
-    player.update()
-    ammo_group.update()
+    if menu_instance.menu_state == 0:
+        pygame.mouse.set_visible(False)
+        duck_group.update()
+        player.update()
+        ammo_group.update()
 
-    draw_score()
-    
-    ammo_spawn_chance = randint(1, 1000)
+        draw_score()
+        
+        ammo_spawn_chance = randint(1, 1000)
 
-    if ammo_spawn_chance == 3 and len(ammo_group) < 2:
-        player.spawn_ammo()
+        if ammo_spawn_chance == 3 and len(ammo_group) < 2:
+            player.spawn_ammo()
 
+        if pause_button_instance.action():
+            player.ammo += 1 # since clicking is counted as shooting, here one ammo is added
+            menu_instance.menu_state = 1
 
-    cursor_img_rect.center = pygame.mouse.get_pos()
-    screen.blit(crosshair_img, cursor_img_rect)
+        cursor_img_rect.center = pygame.mouse.get_pos()
+        screen.blit(crosshair_img, cursor_img_rect)
+
+    else:
+        menu_instance.menu_scene()
+        
+
+    if menu_instance.menu_state == 2:
+        run = False
+
+    if menu_instance.menu_state == 3:
+        menu_instance.controls_scene()
+
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -274,14 +294,17 @@ while run:
 
         if event.type == pygame.KEYDOWN:
 
-            if event.key == pygame.K_s:
+            if event.key == pygame.K_ESCAPE:
+                run = False
+
+            if event.key == pygame.K_s and menu_instance.menu_state == 0:
                 confirm_input = input("Do you want to save the game? [y/N] ")
                 if confirm_input.lower() == "y":
                     save_game() 
                 else:
                     print("Save aborted")
 
-            if event.key == pygame.K_l:
+            if event.key == pygame.K_l and menu_instance.menu_state == 0:
                 confirm_input = input("Do you want to load the game? [y/N] ")
                 if confirm_input.lower() == "y":
                     load_game() 
