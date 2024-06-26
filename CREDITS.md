@@ -4,3 +4,4 @@
 - [Ammo](https://fightswithbears.itch.io/)
 - [Duck](https://www.pixilart.com/art/flying-duck-sr226bd2a1ddfaws3)
 - [Menu Buttons](https://nectanebo.itch.io/menu-buttons)
+- [Shoot animation](https://surfacetoash.itch.io/kaboom-explosions-asset-pack)

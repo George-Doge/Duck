@@ -14,10 +14,26 @@ pygame.display.set_caption("Duck Hunter Simulator")
 
 try:
     # loading pictures in try so it wouldn't crash
-    duck0_img = pygame.image.load('assets/duck/duck0.png').convert_alpha()
-    duck1_img = pygame.image.load('assets/duck/duck1.png').convert_alpha()
-    duck2_img = pygame.image.load('assets/duck/duck2.png').convert_alpha()
-    duck3_img = pygame.image.load('assets/duck/duck3.png').convert_alpha()
+    duck0_img = pygame.image.load('assets/duck/common/duck0.png').convert_alpha()
+    duck1_img = pygame.image.load('assets/duck/common/duck1.png').convert_alpha()
+    duck2_img = pygame.image.load('assets/duck/common/duck2.png').convert_alpha()
+    duck3_img = pygame.image.load('assets/duck/common/duck3.png').convert_alpha()
+
+    # loads chonky duck
+    chonky0_img = pygame.image.load('assets/duck/chonky/chonky0.png').convert_alpha()
+    chonky1_img = pygame.image.load('assets/duck/chonky/chonky1.png').convert_alpha()
+    chonky2_img = pygame.image.load('assets/duck/chonky/chonky2.png').convert_alpha()
+    chonky3_img = pygame.image.load('assets/duck/chonky/chonky3.png').convert_alpha()
+
+
+    # explosion/shooting animation
+    explosion0_img = pygame.image.load('assets/shoot_animation/explosion0.png').convert_alpha()
+    explosion1_img = pygame.image.load('assets/shoot_animation/explosion1.png').convert_alpha()
+    explosion2_img = pygame.image.load('assets/shoot_animation/explosion2.png').convert_alpha()
+    explosion3_img = pygame.image.load('assets/shoot_animation/explosion3.png').convert_alpha()
+    explosion4_img = pygame.image.load('assets/shoot_animation/explosion4.png').convert_alpha()
+    explosion5_img = pygame.image.load('assets/shoot_animation/explosion5.png').convert_alpha()
+    explosion6_img = pygame.image.load('assets/shoot_animation/explosion6.png').convert_alpha()
 
     crosshair_img = pygame.image.load('assets/crosshair.png').convert_alpha()
     background_img = pygame.image.load('assets/background.jpg').convert_alpha()
@@ -93,8 +109,19 @@ def load_game():
     print("Game loaded")
 
 class Duck(pygame.sprite.Sprite):
-    def __init__(self, x, y, direction, speed):
+    def __init__(self, x, y, direction, speed, type):
         pygame.sprite.Sprite.__init__(self)
+
+        self.type = type
+
+        if self.type == "chonky":
+            self.health = 2
+            self.animation_frames = (chonky0_img, chonky1_img, chonky2_img, chonky3_img)
+
+        else:
+            self.health = 1
+            self.animation_frames = (duck0_img, duck1_img, duck2_img, duck3_img)
+
         self.pressed = False
         self.speed = speed
         self.x = x
@@ -104,7 +131,6 @@ class Duck(pygame.sprite.Sprite):
         self.width = self.rect.width
         self.rect.center = (x, y)
         self.direction = direction
-        self.animation_frames = (duck0_img, duck1_img, duck2_img, duck3_img)
         self.animation_cooldown = 200
         self.update_time = pygame.time.get_ticks()
         self.animation_index = 0
@@ -128,7 +154,7 @@ class Duck(pygame.sprite.Sprite):
             self.animation_index += 1
             self.update_time = pygame.time.get_ticks()
 
-        if self.animation_index > 3:
+        if self.animation_index > len(self.animation_frames)-1:
             self.animation_index = 0
 
 
@@ -149,14 +175,19 @@ class Duck(pygame.sprite.Sprite):
         if pygame.mouse.get_pressed()[0] == 1 and not self.pressed and player.ammo > 0:
             self.pressed = True
             if self.rect.collidepoint(self.mouse_pos):
-                self.kill()
-                player.score += 1
-                self.spawn()
-                # print("HIT")
-            else:
-                # print("MISSED")
-                player.ammo -= 1
+                self.health -= 1
 
+        if self.health <= 0:
+            self.kill()
+            self.spawn()
+
+            if self.type == "chonky":
+                player.score += 2
+                player.ammo -= 2
+
+            else:
+                player.score += 1
+                player.ammo -= 1
 
         if pygame.mouse.get_pressed()[0] == 0:
             self.pressed = False
@@ -165,7 +196,9 @@ class Duck(pygame.sprite.Sprite):
         spawn_x = randint(30, 800)
         spawn_y = randint(50, 500)
         spawn_direction = choice([-1, 1])
-        ducky = Duck(spawn_x, spawn_y, spawn_direction, 5)
+        spawn_speed = randint(3, 12)
+        spawn_type = choice(("common", "chonky"))
+        ducky = Duck(spawn_x, spawn_y, spawn_direction, spawn_speed, spawn_type)
         duck_group.add(ducky)
 
     def draw(self):
@@ -177,6 +210,11 @@ class Hunter:
         self.position = pygame.mouse.get_pos()
         self.score = 0
         self.ammo = 7
+        self.shoot_animation_frames = (explosion0_img, explosion1_img, explosion2_img, explosion3_img, explosion4_img, explosion5_img, explosion6_img)
+        self.animation_cooldown = 150
+        self.animation_index = 0
+        self.animation_finished = False
+        self.update_time = pygame.time.get_ticks()
 
     def update(self):
         self.position = pygame.mouse.get_pos()
@@ -191,7 +229,18 @@ class Hunter:
         if player.ammo <= 0:
             write_text("OUT OF AMMO!", 10, 150, RED)
 
+    def shoot_animation(self):
+        self.image = self.shoot_animation_frames[self.animation_index]
 
+        if pygame.time.get_ticks() - self.update_time > self.animation_cooldown:
+            self.animation_index += 1
+            self.update_time = pygame.time.get_ticks()
+
+        if self.animation_index > len(self.shoot_animation_frames)-1:
+            self.animation_index = 0
+            self.animation_finished = True
+
+        screen.blit(self.image, (500, 500))
 
     def spawn_ammo(self):
         spawn_x = randint(30, 800)
@@ -245,7 +294,7 @@ run = True
 duck_group = pygame.sprite.Group()
 ammo_group = pygame.sprite.Group()
 
-ducky = Duck(500, 200, 1, 5)
+ducky = Duck(500, 200, 1, 5, "common")
 duck_group.add(ducky)
 player = Hunter()
 
@@ -276,6 +325,10 @@ while run:
 
         cursor_img_rect.center = pygame.mouse.get_pos()
         screen.blit(crosshair_img, cursor_img_rect)
+
+        #! TODO figure out the animation
+        # if pygame.mouse.get_pressed()[0] == 1 and not player.animation_finished:
+        #     player.shoot_animation()
 
     else:
         menu_instance.menu_scene()

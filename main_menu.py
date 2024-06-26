@@ -35,8 +35,9 @@ except FileNotFoundError as e:
 
 # variables
 text_font = pygame.font.SysFont('Roboco', 50)
+text_font_small = pygame.font.SysFont('Roboco', 35)
 RED = (255, 0, 0)
-
+BLACK = (0, 0, 0)
 
 class Button():
     def __init__(self,image, x, y, size):
@@ -68,14 +69,13 @@ class Button():
         screen.blit(self.image, self.rect)
 
 
-def write_text(text, x, y, colour):
-    text_to_write = text_font.render(text, True, colour)
+def write_text(text, x, y, colour, font_write):
+    text_to_write = font_write.render(text, True, colour)
     screen.blit(text_to_write, (x, y))
 
 class main_menu():
     def __init__(self):
         self.menu_state = 1
-        self.pressed = False
         self.playButton = Button(play_button_image, 550, 300, 0.5)
         self.quitButton = Button(quit_button_image, 550, 600, 0.5)
         self.testButton = Button(test_button_img, 550, 600, 0.3)
@@ -101,8 +101,14 @@ class main_menu():
 
     def controls_scene(self):
         screen.blit(bg_image, (0, 0))
-        write_text("Sorry, controls scene WIP, ESC-quits game", 200, 200, RED)
-        self.back_button_func()      
+        write_text("CONTROLS", 400, 200, BLACK, text_font)
+        write_text("Mouse - aiming", 400, 300, BLACK, text_font)
+        write_text("Left mouse button - shooting", 400, 350, BLACK, text_font)
+        write_text("ESC - quits game", 400, 400, BLACK, text_font)
+        write_text("L - loading / S - saving", 400,450, BLACK, text_font)
+        write_text("There are more types of ducks", 400, 500, BLACK, text_font)
+        write_text("NOTE - run this game from terminal, because loading and saving won't work", 50, 600, BLACK, text_font_small)
+        self.back_button_func()
 
 
     def credits_scene(self):
